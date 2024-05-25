@@ -12,6 +12,7 @@ struct Task: Identifiable {
     let date: String
     var isCompleted: Bool
 }
+
 // MARK: - Content View
 struct ContentView: View {
     @State private var tasks = [
@@ -24,29 +25,69 @@ struct ContentView: View {
     ]
     
     var body: some View {
-        VStack {
-            TaskSummaryView(completedTasks: tasks.filter { $0.isCompleted }.count, totalTasks: tasks.count, uncompletedTasks: tasks.filter { !$0.isCompleted }.count, completeAllAction: {
-                completeAllTasks()
-            })
+        let completedTasks = tasks.filter { $0.isCompleted }.count
+        let totalTasks = tasks.count
+        let uncompletedTasks = tasks.filter { !$0.isCompleted }.count
+        
+        return VStack {
+            TaskSummaryView(
+                completedTasks: completedTasks,
+                totalTasks: totalTasks,
+                uncompletedTasks: uncompletedTasks,
+                completeAllAction: {
+                    completeAllTasks()
+                }
+            )
             
             ScrollView {
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Progress Section
+                    Text("Progress")
+                        .bold()
+                    
+                    VStack(alignment: .leading, spacing: 20) {
+                        Text("Daily Task")
+                            .font(.headline)
+                            .bold()
+                        Text("\(completedTasks)/\(totalTasks) Task Completed")
+                        
+                        HStack {
+                            Text("Keep working")
+                                .font(.footnote)
+                            Spacer()
+                            Text("\(Int(Double(completedTasks) / Double(totalTasks) * 100))%")
+                        }
+                        .font(.subheadline)
+                        
+                        let progressValue: Double = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 0.0
+                        
+                        ProgressView(value: progressValue)
+                            .progressViewStyle(LightBlueProgressViewStyle(height: 20))
+                    }
+                    .padding(.horizontal, 10)
+                    
                     Text("Completed Tasks")
                         .font(.headline)
-                        .padding(.horizontal)
+                        .padding(.horizontal, 10)
                     
                     ForEach(tasks.indices.filter { tasks[$0].isCompleted }, id: \.self) { index in
                         TaskRow(task: $tasks[index])
+                            .padding(.horizontal, 10)
                     }
-                       .padding(.top)
+                    
+                    Text("Uncompleted Tasks")
+                        .font(.headline)
+                        .padding(.horizontal, 10)
+                        .padding(.top)
                     
                     ForEach(tasks.indices.filter { !tasks[$0].isCompleted }, id: \.self) { index in
                         TaskRow(task: $tasks[index])
+                            .padding(.horizontal, 10)
                     }
                 }
             }
         }
-        .padding()
+        .padding(.horizontal, 10)
         .background(Color(UIColor.systemGray5))
     }
     
@@ -56,6 +97,7 @@ struct ContentView: View {
         }
     }
 }
+
 // MARK: - Task Summary View
 struct TaskSummaryView: View {
     var completedTasks: Int
@@ -64,6 +106,7 @@ struct TaskSummaryView: View {
     var completeAllAction: () -> Void
     
     var body: some View {
+       
         VStack(alignment: .leading, spacing: 20) {
             VStack {
                 HStack {
@@ -98,7 +141,6 @@ struct TaskSummaryView: View {
                         .offset(x: 20, y: 20)
                     }
                 }
-                Spacer()
                 Button(action: completeAllAction) {
                     Text("Complete All")
                         .frame(width: 365, height: 60)
@@ -113,60 +155,40 @@ struct TaskSummaryView: View {
                         .cornerRadius(10)
                 }
             }
-            
-            Text("Progress")
-                .bold()
-            
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Daily Task")
-                    .font(.headline)
-                    .bold()
-                Text("\(completedTasks)/\(totalTasks) Task Completed")
-                
-                HStack {
-                    Text("Keep working")
-                        .font(.footnote)
-                    Spacer()
-                    Text("\(Int(Double(completedTasks) / Double(totalTasks) * 100))%")
-                }
-                .font(.subheadline)
-                
-                let progressValue: Double = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 0.0
-                
-                ProgressView(value: progressValue)
-                    .progressViewStyle(LightBlueProgressViewStyle(height: 20, progressBarWidth: 360))
-
-            }
-            
-        }}
+        }
+    }
 }
 
 // MARK: - Progress View
 struct LightBlueProgressViewStyle: ProgressViewStyle {
     var height: CGFloat
-    var progressBarWidth: CGFloat
     
     func makeBody(configuration: Configuration) -> some View {
-        let width = progressBarWidth * CGFloat(configuration.fractionCompleted ?? 0)
-        
-        return ZStack(alignment: .leading) {
-            RoundedRectangle(cornerRadius: height / 2)
-                .frame(height: height)
-                .foregroundColor(Color.blue.opacity(0.1))
-            RoundedRectangle(cornerRadius: height / 2)
-                .frame(width: width, height: height)
-                .foregroundColor(Color.blue.opacity(0.4))
-                .overlay(
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color.black.opacity(0.25), Color.clear]),
-                        startPoint: .top,
-                        endPoint: .bottom
+        GeometryReader { geometry in
+            let progressBarWidth = geometry.size.width
+            let width = progressBarWidth * CGFloat(configuration.fractionCompleted ?? 0)
+            
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: height / 2)
+                    .frame(height: height)
+                    .foregroundColor(Color.blue.opacity(0.1))
+                RoundedRectangle(cornerRadius: height / 2)
+                    .frame(width: width, height: height)
+                    .foregroundColor(Color.blue.opacity(0.4))
+                    .overlay(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.black.opacity(0.25), Color.clear]),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: height / 2))
                     )
-                    .clipShape(RoundedRectangle(cornerRadius: height / 2))
-                )
+            }
         }
+        .frame(height: height)
     }
 }
+
 // MARK: - Task Row
 struct TaskRow: View {
     @Binding var task: Task
@@ -187,11 +209,12 @@ struct TaskRow: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(task.title)
                     .font(.body)
+                    .foregroundColor(.black)
                     .padding(.vertical, 5)
                 Text(task.date)
                     .font(.caption)
                     .foregroundColor(.gray)
-                    .padding(.vertical, 5 )
+                    .padding(.vertical, 5)
             }
             .padding(.leading, 10)
             
@@ -207,11 +230,12 @@ struct TaskRow: View {
         }
         .background(Color.white)
         .cornerRadius(10)
-        .padding(.horizontal)
+        .padding(.horizontal, 10)
+        .padding(.bottom, 8)
     }
 }
 
-
+// MARK: - ContentView Preview
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
