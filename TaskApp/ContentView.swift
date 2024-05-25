@@ -49,6 +49,7 @@ struct ContentView: View {
                         Text("Daily Task")
                             .font(.headline)
                             .bold()
+                            .padding(.top, 10)
                         Text("\(completedTasks)/\(totalTasks) Task Completed")
                         
                         HStack {
@@ -62,9 +63,12 @@ struct ContentView: View {
                         let progressValue: Double = totalTasks > 0 ? Double(completedTasks) / Double(totalTasks) : 0.0
                         
                         ProgressView(value: progressValue)
-                            .progressViewStyle(LightBlueProgressViewStyle(height: 20))
+                            .progressViewStyle(LightBlueProgressViewStyle(height: 20)).padding(.bottom, 10)
                     }
                     .padding(.horizontal, 10)
+                    .background(.white)
+                    .cornerRadius(10)
+                    .foregroundColor(.black)
                     
                     Text("Completed Tasks")
                         .font(.headline)
